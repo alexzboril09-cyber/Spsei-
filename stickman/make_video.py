@@ -7,13 +7,14 @@ Turns a story file (parts/*.json) into a vertical 9:16 short (MP4) with:
   - big captions with highlighted words
   - a clock in the corner, rule cards, phone texts, knocking, etc.
   - generated ambient music + sound effects
-  - optional narrator voice (edge-tts, needs internet)
+  - an AI narrator voice (offline Kokoro voice, downloaded automatically once)
   - an ending where viewers choose A or B in the comments
 
 Usage:
   python make_video.py parts/part01.json
   python make_video.py parts/part01.json --preview        # fast, half size
-  python make_video.py parts/part01.json --voice          # add AI narrator
+  python make_video.py parts/part01.json --voice am_michael   # pick another narrator
+  python make_video.py parts/part01.json --no-voice           # no narrator
   python make_video.py parts/*.json                        # render every part
 """
 import argparse, asyncio, json, math, os, random, re, shutil, subprocess, sys, tempfile, wave
@@ -745,6 +746,8 @@ def draw_caption(img, cv, beat, t, dur, accent):
     say = beat.get("say", "")
     if not say or beat.get("captions") is False:
         return
+    if beat.get("_speech"):
+        dur = beat["_speech"] + 0.1  # follow the narrator's timing
     chunks = chunk_words(say)
     weights = [sum(len(w) for w in c) + 3 for c in chunks]
     tot = sum(weights)
@@ -951,25 +954,75 @@ async def _tts(text, voice, path, rate):
     import edge_tts
     await edge_tts.Communicate(text, voice, rate=rate, pitch="-4Hz").save(path)
 
-def make_voice(beats, voice, tmp, rate):
+KOKORO_DIR = os.path.join(HERE, "voice_models")
+KOKORO_FILES = {
+    "kokoro-v1.0.int8.onnx": "https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/kokoro-v1.0.int8.onnx",
+    "voices-v1.0.bin": "https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/voices-v1.0.bin",
+}
+
+def kokoro_engine():
+    """Offline AI narrator (Kokoro). Downloads the voice model (~120 MB) the first time."""
     try:
-        import edge_tts  # noqa: F401
+        from kokoro_onnx import Kokoro
     except ImportError:
-        print("  ! edge-tts not installed (pip install edge-tts) - rendering without narrator")
+        print("  ! narrator needs: pip install kokoro-onnx soundfile")
         return None
+    os.makedirs(KOKORO_DIR, exist_ok=True)
+    for name, url in KOKORO_FILES.items():
+        path = os.path.join(KOKORO_DIR, name)
+        if not os.path.exists(path):
+            print(f"  downloading voice model {name} (first time only)...")
+            import urllib.request
+            urllib.request.urlretrieve(url, path + ".part")
+            os.replace(path + ".part", path)
+    return Kokoro(os.path.join(KOKORO_DIR, "kokoro-v1.0.int8.onnx"), os.path.join(KOKORO_DIR, "voices-v1.0.bin"))
+
+def speakable(text):
+    """Make clock times read naturally: '12:13' -> '12 13', '3:07' -> '3 oh 7', 'AM/PM' -> 'A M'."""
+    text = re.sub(r"\b(\d{1,2}):00\b", r"\1 o'clock", text)
+    text = re.sub(r"\b(\d{1,2}):0(\d)\b", r"\1 oh \2", text)
+    text = re.sub(r"\b(\d{1,2}):(\d\d)\b", r"\1 \2", text)
+    text = re.sub(r"\bAM\b", "A.M.", text)
+    text = re.sub(r"\bPM\b", "P.M.", text)
+    return text.replace("...", ",")
+
+def make_voice(beats, voice, tmp, rate):
+    lines = [b.get("voice", b.get("say", "")) for b in beats]
     clips = []
-    for i, b in enumerate(beats):
-        say = b.get("voice", b.get("say", ""))
+    if "Neural" in voice:  # Microsoft edge-tts voice (online)
+        try:
+            import edge_tts  # noqa: F401
+        except ImportError:
+            print("  ! edge-tts not installed (pip install edge-tts) - rendering without narrator")
+            return None
+        for i, say in enumerate(lines):
+            if not say:
+                clips.append(None)
+                continue
+            p = os.path.join(tmp, f"v{i}.mp3")
+            try:
+                asyncio.run(_tts(say, voice, p, rate))
+                clips.append(read_audio(p))
+            except Exception as e:
+                print(f"  ! voice failed ({e.__class__.__name__}: {e}) - rendering without narrator")
+                return None
+        return clips
+    try:
+        k = kokoro_engine()
+    except Exception as e:
+        print(f"  ! could not load narrator ({e}) - rendering without narrator")
+        return None
+    if k is None:
+        return None
+    speed = 1.0 + float(rate.strip("%").replace("+", "") or 0) / 100
+    for say in lines:
         if not say:
             clips.append(None)
             continue
-        p = os.path.join(tmp, f"v{i}.mp3")
-        try:
-            asyncio.run(_tts(say, voice, p, rate))
-            clips.append(read_audio(p))
-        except Exception as e:
-            print(f"  ! voice failed ({e.__class__.__name__}: {e}) - rendering without narrator")
-            return None
+        a, sr = k.create(speakable(say), voice=voice, speed=speed, lang="en-us")
+        a = np.asarray(a, dtype=np.float32)
+        a = np.interp(np.arange(int(len(a) * SR / sr)) * sr / SR, np.arange(len(a)), a)
+        clips.append(a / max(1e-6, np.max(np.abs(a))) * 0.95)
     return clips
 
 
@@ -978,10 +1031,10 @@ def make_voice(beats, voice, tmp, rate):
 def beat_duration(b, clip):
     if "dur" in b:
         return float(b["dur"])
-    if clip is not None:
-        return len(clip) / SR + 0.3
     words = len(b.get("say", "").split())
     base = words / 2.6 + 0.5
+    if clip is not None:
+        base = len(clip) / SR + 0.35
     if b.get("scene") == "phone":
         base = max(base, 1.4 * len(b.get("messages", [])) + 0.6)
     if b.get("scene") == "choice":
@@ -1004,6 +1057,9 @@ def render(story_path, out_dir, preview=False, voice=None, rate="+8%"):
     clips = make_voice(beats, voice, tmp, rate) if voice else None
     if clips is None:
         clips = [None] * len(beats)
+    for b, c in zip(beats, clips):
+        if c is not None:
+            b["_speech"] = len(c) / SR
     durs = [beat_duration(b, c) for b, c in zip(beats, clips)]
     total = sum(durs)
     starts = np.cumsum([0] + durs[:-1])
@@ -1091,14 +1147,16 @@ def main():
     ap.add_argument("stories", nargs="+", help="story .json files")
     ap.add_argument("--out", default=os.path.join(HERE, "output"))
     ap.add_argument("--preview", action="store_true", help="half resolution, faster")
-    ap.add_argument("--voice", nargs="?", const="en-US-ChristopherNeural", default=None,
-                    help="add an AI narrator via edge-tts (needs internet). Optional voice name.")
-    ap.add_argument("--rate", default="+8%", help="narrator speed, e.g. +0%% or +15%%")
+    ap.add_argument("--voice", default="am_onyx",
+                    help="narrator voice. Offline Kokoro voices: am_onyx (deep, default), am_michael, am_adam, "
+                         "bm_george (British), af_bella, af_nicole (female). Or an edge-tts name like en-US-GuyNeural.")
+    ap.add_argument("--no-voice", action="store_true", help="captions + music only, no narrator")
+    ap.add_argument("--rate", default="+5%", help="narrator speed, e.g. +0%% or +15%%")
     a = ap.parse_args()
     if not shutil.which("ffmpeg"):
         sys.exit("ffmpeg is required: https://ffmpeg.org/download.html")
     for s in a.stories:
-        render(s, a.out, a.preview, a.voice, a.rate)
+        render(s, a.out, a.preview, None if a.no_voice else a.voice, a.rate)
 
 
 if __name__ == "__main__":

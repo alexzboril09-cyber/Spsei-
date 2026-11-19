@@ -10,18 +10,26 @@ Each video is one small story file in `parts/`. To make the next part, write a n
 ## Quick start
 
 ```bash
-pip install numpy pillow          # once
+pip install numpy pillow kokoro-onnx soundfile   # once
 # also install ffmpeg: https://ffmpeg.org/download.html
 
-python make_video.py parts/part01.json              # full quality 1080x1920
-python make_video.py parts/part01.json --preview    # quick low-res check
-python make_video.py parts/part01.json --voice      # + AI narrator (pip install edge-tts, needs internet)
-python make_video.py parts/*.json                   # render all parts
+python make_video.py parts/part01.json                      # full quality 1080x1920, with narrator
+python make_video.py parts/part01.json --preview            # quick low-res check
+python make_video.py parts/part01.json --voice am_michael   # different narrator
+python make_video.py parts/part01.json --no-voice           # captions + music only
+python make_video.py parts/*.json                           # render all parts
 ```
 
 Videos go to `output/`. Each video also gets a `.post.txt` file with a ready
 caption, the A/B options for a pinned comment, hashtags, and the narration
 script (if you'd rather record the voice yourself).
+
+## Narrator voice
+
+An AI narrator reads every `say` line, and the captions follow the voice. It runs offline using the
+Kokoro voice model (~120 MB), which downloads automatically into `voice_models/` the first time.
+Voices: `am_onyx` (deep, default), `am_michael`, `am_adam`, `bm_george` (British), `af_bella`, `af_nicole`.
+Speed: `--rate +10%`. To make the narrator say something different from the caption, add `"voice": "..."` to a beat.
 
 ## The series loop
 
