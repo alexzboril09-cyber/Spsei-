@@ -1,0 +1,22 @@
+{
+  "series": "My Series",
+  "part": 1,
+  "accent": "#c6ff3d",
+  "handle": "@yourchannel",
+  "post_caption": "He found a list of rules. Part 1",
+  "beats": [
+    { "scene": "bedroom", "clock": "3:07 AM", "man": { "pose": "sit" },
+      "say": "3:07 AM. Your phone lights up.", "hl": ["3:07"], "sfx": "buzz" },
+    { "scene": "phone", "contact": "Me", "messages": [
+        { "from": "them", "text": "don't turn on the light." },
+        { "from": "them", "text": "I'm you. From tomorrow." } ],
+      "say": "A text. From your own number.", "hl": ["own"] },
+    { "scene": "rule", "num": 1, "text": "Never turn on a light", "icon": "light",
+      "say": "Rule one. Never turn on a light.", "hl": ["light."], "sfx": "click" },
+    { "scene": "door", "knock": true, "clock": "3:31 AM", "clock_alert": true,
+      "say": "3:31. Someone knocks.", "hl": ["knocks."], "sfx": "knock" },
+    { "scene": "face", "expr": "scared", "say": "It's your voice.", "hl": ["voice."] },
+    { "scene": "choice", "question": "Phone or door?", "a": "Answer the phone", "b": "Open the door",
+      "say": "The phone, or the door? Comment A or B.", "hl": ["A", "B."], "sfx": "riser" }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "series": "Route 0",
+  "part": 2,
+  "accent": "#c6ff3d",
+  "handle": "@yourchannel",
+  "post_caption": "You chose B: he stayed seated. Something is getting closer. Part 2",
+  "hashtags": ["#stickman", "#rules", "#horrorstory", "#scary", "#choices", "#part2", "#fyp"],
+  "beats": [
+    { "scene": "title", "kicker": "YOU CHOSE B", "title": "Stay seated", "subtitle": "PART 2", "clock": "12:15 AM",
+      "say": "You chose B. He stays seated. Eyes forward.", "hl": ["B."], "sfx": "whoosh" },
+    { "scene": "bus", "man": { "pose": "sit", "x": 0.4 }, "back_figure": "there", "flicker": true,
+      "say": "The tapping stops. Everything goes quiet.", "hl": ["quiet."], "sfx": "static" },
+    { "scene": "face", "expr": "worried",
+      "say": "Too quiet. You can hear breathing. Behind you.", "hl": ["breathing."], "sfx": "heartbeat" },
+    { "scene": "phone", "contact": "Unknown", "time": "12:16 AM", "sfx": "buzz", "typing": true,
+      "messages": [
+        { "from": "them", "text": "good. you didn't look.", "creepy": true },
+        { "from": "them", "text": "now don't move when it sits next to you", "creepy": true }
+      ],
+      "say": "Good. You didn't look. Now don't move when it sits next to you.", "hl": ["don't", "move"] },
+    { "scene": "bus", "man": { "pose": "sit", "x": 0.4 }, "back_figure": "there", "red_eyes": true, "zoom": true,
+      "say": "The back row creaks. It's getting up.", "hl": ["getting", "up."], "sfx": "sting" },
+    { "scene": "rule", "num": 4, "text": "If it sits next to you, give it your name", "icon": "name",
+      "say": "You flip the card over. Rule four. If it sits next to you, give it your name.", "hl": ["four.", "name."], "sfx": "click" },
+    { "scene": "face", "expr": "scared", "shake": 1,
+      "say": "But which name? Your real one... or Mark?", "hl": ["real", "Mark?"] },
+    { "scene": "text", "lines": ["IT'S", "SITTING", "DOWN."], "size": 140,
+      "say": "It's sitting down.", "hl": ["down."], "sfx": "knock" },
+    { "scene": "choice", "clock": "12:17 AM",
+      "question": "Which name do you give it?",
+      "a": "Your real name", "b": "Mark - the fake name",
+      "next": "PART 3",
+      "say": "Your real name? Or Mark? Comment A or B.", "hl": ["A", "B."], "sfx": "riser" }
+  ]
+}

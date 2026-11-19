@@ -1,0 +1,39 @@
+{
+  "series": "Route 0",
+  "part": 2,
+  "accent": "#c6ff3d",
+  "handle": "@yourchannel",
+  "post_caption": "You chose A: he pulled the cord. Bad idea? Part 2",
+  "hashtags": ["#stickman", "#rules", "#horrorstory", "#scary", "#choices", "#part2", "#fyp"],
+  "beats": [
+    { "scene": "title", "kicker": "YOU CHOSE A", "title": "Pull the cord", "subtitle": "PART 2", "clock": "12:15 AM",
+      "say": "You chose A. He pulls the cord.", "hl": ["A."], "sfx": "whoosh" },
+    { "scene": "bus", "man": { "pose": "stand", "x": 0.4 }, "back_figure": "there", "sign": "STOP REQUESTED",
+      "say": "Ding. Stop requested.", "hl": ["requested."], "sfx": "click" },
+    { "scene": "bus", "stopped": true, "man": { "pose": "stand", "x": 0.4 }, "back_figure": "there", "sign": "NEXT STOP: HOME",
+      "say": "The bus stops. The sign says: Home.", "hl": ["home."], "sfx": "brakes" },
+    { "scene": "face", "expr": "worried",
+      "say": "But you never told anyone where you live.", "hl": ["never"], "sfx": "heartbeat" },
+    { "scene": "rule", "num": 4, "text": "Never get off at a stop that knows you", "icon": "stop",
+      "say": "On the back of the card... a fourth rule. Never get off at a stop that knows you.", "hl": ["fourth", "knows"], "sfx": "sting" },
+    { "scene": "phone", "contact": "Mom", "time": "12:17 AM", "sfx": "buzz",
+      "messages": [
+        { "from": "them", "text": "I see the bus outside!" },
+        { "from": "them", "text": "come in, I left the door open" }
+      ],
+      "say": "Mom texts. She can see the bus outside. The door is open.", "hl": ["outside.", "open."] },
+    { "scene": "street", "bus": "stay", "man": false, "clock": "12:18 AM",
+      "say": "But your house is forty minutes away.", "hl": ["forty"] },
+    { "scene": "bus", "stopped": true, "driver": true, "man": { "pose": "stand", "x": 0.4 },
+      "say": "The driver whispers. Your stop, Mark.", "hl": ["Mark."] },
+    { "scene": "door", "knock": true, "feet": true, "flicker": true,
+      "say": "Through the bus door, you see your front door. Someone is standing behind it.", "hl": ["front", "door."], "sfx": "knock" },
+    { "scene": "text", "lines": ["IT'S", "YOUR", "VOICE."], "size": 150,
+      "say": "And the voice calling you inside... is yours.", "hl": ["yours."], "sfx": "sting" },
+    { "scene": "choice", "clock": "12:19 AM",
+      "question": "Step off the bus or tell the driver your real name?",
+      "a": "Step off - go inside", "b": "Tell the driver your real name",
+      "next": "PART 3",
+      "say": "Step off the bus? Or tell the driver your real name? Comment A or B.", "hl": ["A", "B."], "sfx": "riser" }
+  ]
+}
